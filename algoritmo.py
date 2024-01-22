@@ -6,7 +6,10 @@ import numpy as np
 import tkinter as tk
 from tkinter import Label, Entry, Button,StringVar, OptionMenu
 import matplotlib.pyplot as plt
-import math
+import os
+import cv2
+from natsort import natsorted  # Instala esta biblioteca si aún no la tienes: pip install natsort
+
 
 intervalo =[-4,4]
 Resolución= 0.05
@@ -20,11 +23,13 @@ maximos=[]
 minimos=[]
 generaciones = []
 promedios=[]
+numero = 0
 
 
 opcion_max_min ="maximizar"
 
 def main ():
+    
     tamaño_generaciones=[]
     iteracion_gen=[]
     def calculo_rango(intervalo):
@@ -196,7 +201,7 @@ def main ():
             resultados_fx = []
 
             for elemento in Resultados_X:
-                resultado = ((elemento[2]**3 * math.sin(elemento[2])))/100 + elemento[2]**2 * math.cos(elemento[2])
+                resultado = ((elemento[2]**3 * np.sin(elemento[2])))/100 + elemento[2]**2 * np.cos(elemento[2])
                 resultados_fx.append(elemento + (round(resultado, 4),))
 
             return resultados_fx
@@ -244,6 +249,9 @@ def main ():
         print(minimos)
         print(promedios)
         tamaño_generaciones.append(len(poblacion_generada))
+
+        grafica_funcion(Resultados_fx,intervalo)
+
         def poda_aleatoria(poblacion, limite_poblacion):
             while len(poblacion) > limite_poblacion - 1:
                 # Elige aleatoriamente un individuo para eliminar
@@ -285,40 +293,117 @@ def main ():
 
         poblacion_generada = resultado_nueva_poblacion
     print(f"maximos aaaaaaaa {Resultados_fx}")
-    graficacion_resultados(maximos, minimos, promedios,tamaño_generaciones,iteracion_gen)
+    graficacion_resultados(maximos, minimos, promedios)
+    # Ruta de la carpeta de imágenes y ruta del video de salida
+    folder_path = 'Imagenes'
+    video_path = 'output_video.mp4'
+
+    # Convertir las imágenes en la carpeta a un video
+    convertir_a_video(folder_path, video_path)
     reset_variables()
 
 def reset_variables():
-        global maximos, minimos, promedios
+        global maximos, minimos, promedios,numero
         maximos = []
         minimos = []
         promedios = []
+        
 
-def graficacion_resultados(maximos, minimos, promedios,tamaño_generaciones,iteracion_gen):
+def graficacion_resultados(maximos, minimos, promedios):
 
-        fig, axs = plt.subplots(2, 1, figsize=(10, 12))
+        fig, axs = plt.subplots( figsize=(10, 12))
         generaciones = range(1, cantidad_generaciones + 1)
-        axs[0].plot(generaciones, maximos, label='Mejor', marker='o', linestyle='-', color='green')
-        axs[0].plot(generaciones, minimos, label='Peor', marker='o', linestyle='-', color='red')
-        axs[0].plot(generaciones, promedios, label='Promedio', marker='o', linestyle='-', color='orange')
-        axs[0].set_title('Evolucion de la aptidud de los individuos')
-        axs[0].set_xlabel('Generacion')
-        axs[0].set_ylabel('Fitness')
-        axs[0].legend()
-        axs[0].grid(True)
-
-        # Subplot para el incremento de la población
-        generacionesP = range(1, cantidad_generaciones + 2)
-        axs[1].plot(generacionesP, tamaño_generaciones, marker='o', linestyle='-', color='blue')
-        axs[1].set_title('Incremento de la Población por Generacion')
-        axs[1].set_xlabel('Generacion')
-        axs[1].set_ylabel('Tamaño de la Poblacion')
-        axs[1].grid(True)
-
-        # Ajustar el layout y mostrar las gráficas
+        axs.plot(generaciones, maximos, label='Mejor', marker='o', linestyle='-', color='green')
+        axs.plot(generaciones, minimos, label='Peor', marker='o', linestyle='-', color='red')
+        axs.plot(generaciones, promedios, label='Promedio', marker='o', linestyle='-', color='orange')
+        axs.set_title('Evolucion de la aptidud de los individuos')
+        axs.set_xlabel('Generacion')
+        axs.set_ylabel('Fitness')
+        axs.legend()
+        axs.grid(True)
         plt.tight_layout()
         plt.show()
-  
+
+def grafica_funcion(Resultados_fx, intervalo):
+    global numero  # Para modificar la variable global 'numero'
+    numero += 1  # Incrementar el número cada vez que se llama a la función
+
+    # Definir la función
+    def mi_funcion(x):
+        return ((x**3 * np.sin(x))/100) + x**2 * np.cos(x)
+
+    # Especificar el intervalo en el eje x
+    intervalo_x = np.linspace(intervalo[0], intervalo[1], 1000)
+
+    # Calcular los valores de la función para cada punto en el intervalo
+    valores_y = mi_funcion(intervalo_x)
+
+    # Graficar la función
+    plt.plot(intervalo_x, valores_y, label='Funcion')
+
+    # Agregar puntos desde la matriz
+    # Obtener las coordenadas de los puntos
+    coordenadas = [(dato[2], dato[3]) for dato in Resultados_fx]
+
+    # Encontrar el índice del punto más bajo y más alto
+    indice_min = np.argmin([dato[3] for dato in Resultados_fx])
+    indice_max = np.argmax([dato[3] for dato in Resultados_fx])
+
+    # Graficar el punto más bajo en verde y el punto más alto en azul
+    for i, (x_punto, y_punto) in enumerate(coordenadas):
+        if i == indice_min:
+            plt.scatter(x_punto, y_punto, color='green', marker='o', label='Punto más bajo')
+        elif i == indice_max:
+            plt.scatter(x_punto, y_punto, color='blue', marker='o', label='Punto más alto')
+
+    # Configuración adicional del gráfico
+    plt.title(f'Generacion{numero}')
+    plt.xlabel('Eje X')
+    plt.ylabel('Eje Y')
+    plt.legend()
+    plt.grid(True)
+    folder_path = 'Imagenes'
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Guardar el gráfico como una imagen en la carpeta especificada
+    image_path = os.path.join(folder_path, f'grafico_ejemplo{numero}.png')
+    plt.savefig(image_path)
+    plt.close()  # Cierra la figura para evitar acumular gráficos en memoria
+
+def eliminar_imagenes(folder_path):
+    # Eliminar archivos existentes en la carpeta
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            print(f'Error al eliminar {file_path}: {e}')
+
+def convertir_a_video(folder_path, video_path):
+    # Obtener la lista de archivos de imágenes en la carpeta
+    image_files = [f for f in os.listdir(folder_path) if f.endswith('.png')]
+    image_files = natsorted(image_files)  # Ordenar alfabéticamente los archivos
+
+    # Obtener las dimensiones de la primera imagen para configurar el video
+    first_image_path = os.path.join(folder_path, image_files[0])
+    img = cv2.imread(first_image_path)
+    height, width, _ = img.shape
+
+    # Configurar el objeto VideoWriter
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Puedes cambiar 'mp4v' a otro codec si es necesario
+    video = cv2.VideoWriter(video_path, fourcc, 1, (width, height))
+
+    # Leer cada imagen y escribirla en el video
+    for image_file in image_files:
+        image_path = os.path.join(folder_path, image_file)
+        img = cv2.imread(image_path)
+        video.write(img)
+
+    # Liberar el objeto VideoWriter y cerrar la ventana del video
+    video.release()
+    cv2.destroyAllWindows()
+
 # Función para actualizar las variables globales con los valores ingresados por el usuario
 def actualizar_variables_globales():
     global intervalo, Resolucion, poblacion_inicial, cantidad_generaciones
@@ -382,7 +467,7 @@ option_menu = OptionMenu(root, var_opcion_max_min, "maximizar", "minimizar")
 option_menu.grid(row=9, column=1)
 
 # Botón para ejecutar el algoritmo genético
-Button(root, text="Ejecutar Algoritmo Genético", command=lambda: [actualizar_variables_globales(), main()]).grid(row=10, column=0, columnspan=2)
+Button(root, text="Ejecutar Algoritmo Genético", command=lambda: [eliminar_imagenes('Imagenes'),actualizar_variables_globales(), main()]).grid(row=10, column=0, columnspan=2)
 
 # Iniciar la interfaz gráfica
 root.mainloop()

@@ -201,7 +201,7 @@ def main ():
             resultados_fx = []
 
             for elemento in Resultados_X:
-                resultado = ((elemento[2]**3 * np.sin(elemento[2])))/100 + elemento[2]**2 * np.cos(elemento[2])
+                resultado = ((elemento[2]**2 * np.cos(5*elemento[2]))) - 3*elemento[2]
                 resultados_fx.append(elemento + (round(resultado, 4),))
 
             return resultados_fx
@@ -250,7 +250,7 @@ def main ():
         print(promedios)
         tamaño_generaciones.append(len(poblacion_generada))
 
-        grafica_funcion(Resultados_fx,intervalo)
+        grafica_funcion(Resultados_fx,intervalo,opcion_max_min)
 
         def poda_aleatoria(poblacion, limite_poblacion):
             while len(poblacion) > limite_poblacion - 1:
@@ -293,7 +293,7 @@ def main ():
 
         poblacion_generada = resultado_nueva_poblacion
     print(f"maximos aaaaaaaa {Resultados_fx}")
-    graficacion_resultados(maximos, minimos, promedios)
+    graficacion_resultados(maximos, minimos, promedios,opcion_max_min)
     # Ruta de la carpeta de imágenes y ruta del video de salida
     folder_path = 'Imagenes'
     video_path = 'output_video.mp4'
@@ -309,12 +309,18 @@ def reset_variables():
         promedios = []
         
 
-def graficacion_resultados(maximos, minimos, promedios):
+def graficacion_resultados(maximos, minimos, promedios,opcion_max_min):
 
         fig, axs = plt.subplots( figsize=(10, 12))
         generaciones = range(1, cantidad_generaciones + 1)
-        axs.plot(generaciones, maximos, label='Mejor', marker='o', linestyle='-', color='green')
-        axs.plot(generaciones, minimos, label='Peor', marker='o', linestyle='-', color='red')
+        if opcion_max_min == "maximizar":
+            axs.plot(generaciones, maximos, label='Mejor', marker='o', linestyle='-', color='green')
+            axs.plot(generaciones, minimos, label='Peor', marker='o', linestyle='-', color='red')
+        elif opcion_max_min =="minimizar":
+            axs.plot(generaciones, maximos, label='peor', marker='o', linestyle='-', color='red')
+            axs.plot(generaciones, minimos, label='mejor', marker='o', linestyle='-', color='green')
+                    
+        
         axs.plot(generaciones, promedios, label='Promedio', marker='o', linestyle='-', color='orange')
         axs.set_title('Evolucion de la aptidud de los individuos')
         axs.set_xlabel('Generacion')
@@ -324,13 +330,13 @@ def graficacion_resultados(maximos, minimos, promedios):
         plt.tight_layout()
         plt.show()
 
-def grafica_funcion(Resultados_fx, intervalo):
+def grafica_funcion(Resultados_fx, intervalo,opcion_max_min):
     global numero  # Para modificar la variable global 'numero'
     numero += 1  # Incrementar el número cada vez que se llama a la función
 
     # Definir la función
     def mi_funcion(x):
-        return ((x**3 * np.sin(x))/100) + x**2 * np.cos(x)
+        return ((x**2 * np.cos(5*x))) - 3*x
 
     # Especificar el intervalo en el eje x
     intervalo_x = np.linspace(intervalo[0], intervalo[1], 1000)
@@ -350,11 +356,18 @@ def grafica_funcion(Resultados_fx, intervalo):
     indice_max = np.argmax([dato[3] for dato in Resultados_fx])
 
     # Graficar el punto más bajo en verde y el punto más alto en azul
-    for i, (x_punto, y_punto) in enumerate(coordenadas):
-        if i == indice_min:
-            plt.scatter(x_punto, y_punto, color='green', marker='o', label='Punto más bajo')
-        elif i == indice_max:
-            plt.scatter(x_punto, y_punto, color='blue', marker='o', label='Punto más alto')
+    if opcion_max_min=="maximizar":
+        for i, (x_punto, y_punto) in enumerate(coordenadas):
+            if i == indice_min:
+                plt.scatter(x_punto, y_punto, color='green', marker='o', label='peor individuo')
+            elif i == indice_max:
+                plt.scatter(x_punto, y_punto, color='blue', marker='o', label='mejor individuo')
+    elif opcion_max_min=="minimizar":
+        for i, (x_punto, y_punto) in enumerate(coordenadas):
+            if i == indice_min:
+                plt.scatter(x_punto, y_punto, color='green', marker='o', label='mejor individuo')
+            elif i == indice_max:
+                plt.scatter(x_punto, y_punto, color='blue', marker='o', label='peor individuo')
 
     # Configuración adicional del gráfico
     plt.title(f'Generacion{numero}')

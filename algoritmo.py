@@ -201,7 +201,7 @@ def main ():
             resultados_fx = []
 
             for elemento in Resultados_X:
-                resultado = ((elemento[2]**2 * np.cos(5*elemento[2]))) - 3*elemento[2]
+                resultado =((elemento[2]**3 * np.sin(elemento[2])) / 100) + elemento[2]**2 * np.cos(elemento[2]) #(np.cbrt(np.abs(elemento[2]**5)) * np.cos(elemento[2]**2))
                 resultados_fx.append(elemento + (round(resultado, 4),))
 
             return resultados_fx
@@ -336,7 +336,7 @@ def grafica_funcion(Resultados_fx, intervalo,opcion_max_min):
 
     # Definir la función
     def mi_funcion(x):
-        return ((x**2 * np.cos(5*x))) - 3*x
+        return ((x**3 * np.sin(x)) / 100) + x**2 * np.cos(x)
 
     # Especificar el intervalo en el eje x
     intervalo_x = np.linspace(intervalo[0], intervalo[1], 1000)
@@ -355,6 +355,9 @@ def grafica_funcion(Resultados_fx, intervalo,opcion_max_min):
     indice_min = np.argmin([dato[3] for dato in Resultados_fx])
     indice_max = np.argmax([dato[3] for dato in Resultados_fx])
 
+    for i, (x_punto , y_punto) in enumerate(coordenadas):
+        if i != indice_max & i != indice_min:
+            plt.scatter(x_punto, y_punto, color='black', marker='o')
     # Graficar el punto más bajo en verde y el punto más alto en azul
     if opcion_max_min=="maximizar":
         for i, (x_punto, y_punto) in enumerate(coordenadas):
